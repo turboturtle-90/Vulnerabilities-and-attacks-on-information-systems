@@ -5,6 +5,8 @@
 -Какие сетевые службы разрешены?
 -Какие уязвимости были вами обнаружены? (список со ссылками: достаточно трёх уязвимостей)
 
+***
+
 `При сканировании были выявлены следующие разрешенные службы:`
 ![allowed-serv.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/a43be2f79d9376a56812219636aac2d967966578/allowed-serv.jpg)
 
@@ -28,34 +30,72 @@ https://www.exploit-db.com/exploits/29724
 ``` 
 https://www.exploit-db.com/exploits/37834
 ```
+***
+***
 
 ### Задание 2
 
-`Ссылка на .cfg`
+Проведите сканирование Metasploitable в режимах SYN, FIN, Xmas, UDP.
+Запишите сеансы сканирования в Wireshark.
+Ответьте на следующие вопросы:
 
-https://github.com/turboturtle-90/Homework_clustering_and_load_balancing/blob/593b469a59cef8dcb0deedeb24426b0453281f6e/haproxy.cfg-assignment2 
+-Чем отличаются эти режимы сканирования с точки зрения сетевого трафика?
+-Как отвечает сервер?
 
-`Балансировка на 7 уровне по roubdrobin с весовыми множителями и обработкой только при адресации к домену example.com`
-![2-weighted-level7.jpg](https://github.com/turboturtle-90/Homework_clustering_and_load_balancing/blob/593b469a59cef8dcb0deedeb24426b0453281f6e/2-weighted-level7.jpg)
+***
 
 
-`Текст конфига /etc/haproxy/haproxy.cfg в части балансировки roundronib на 7 уровне приведен ниже :`
 
-```                                                         
-frontend example  # секция фронтенд
-        mode http
-        bind :8088
-        #default_backend web_servers
-        acl ACL_example.com hdr(host) -i example.com
-        use_backend web_servers if ACL_example.com
+С точки зрения сетевого трафика, разные режимы используют разные протоколы и разные пакеты.
 
-backend web_servers    # секция бэкенд
-        mode http
-        balance roundrobin
-        option httpchk
-        http-check send meth GET uri /index.html
-        server s1 127.0.0.1:8888 check weight 2
-        server s2 127.0.0.1:9999 check weight 3
-        server s3 127.0.0.1:9999 check weight 4
-```
+SYN - работает по TCP и отправляет запрос на установку соединения. Сервер ответит в соотвествии с протоколом:
+- если открыт придет ответ ACK
+- если закрыт придет ответ RST, SYN
+
+FIN - работает по TCP и отправляет запрос на закрытие соединения. Сервер ответит в соотвествии с протоколом:
+- если открыт, ответа не будет. Запрос на закрытие соединения без собственно его открытия будет посчитан ошибочным и не вызовет никакого ответа
+- если закрыт придет ответ RST
+
+XMas - работает по TCP и отправляет запрос с несколькими флагами сразу. Сервер ответит в соотвествии с протоколом:
+- если открыт, ответа не будет. Запрос с противоречивыми флагами будет посчитан ошибочным и не вызовет никакого ответа
+- если закрыт придет ответ RST
+
+UPD - работает по UPD и отправляет пакет данных. Сервер ответит в соотвествии с протоколом:
+- порты TCP просто проигнорируют запрос
+- если UDP открыт, служба сидящая на порту что-то ответит
+- если закрыт придет ответ "destination unreachable"
+
+Примеры логов Wireshark из тестового сканирования приведены ниже
+
+
+
+`SYN ответ на открытый порт `
+
+![SYN-OPEN.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/SYN-OPEN.jpg)
+
+`SYN ответ на закрытый порт `
+
+![SYN-CLOSED.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/SYN-CLOSED.jpg)
+
+`FIN запрос на открытый порт - а ответа от него нет`
+
+![FIN-OPEN-example.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/FIN-OPEN-example.jpg)
+
+`FIN ответ на закрытый порт `
+
+![FIN-CLOSED-example.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/FIN-CLOSED-example.jpg)
+
+`XMas запрос на открытый порт - а ответа от него нет`
+
+![XMS-OPEN.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/XMS-OPEN.jpg)
+
+`XMas ответ на закрытый порт `
+
+![XMS-CLOSED.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/XMS-CLOSED.jpg)
+
+`UDP сканирование - ответы служб с портов 53 и 137, "destination unreachable" c остальных`
+
+![UDP.jpg](https://github.com/turboturtle-90/Vulnerabilities-and-attacks-on-information-systems/blob/ea06cc1c034bd8e18e07268c1b3b22500f843c55/UDP.jpg)
+
+
 ---
